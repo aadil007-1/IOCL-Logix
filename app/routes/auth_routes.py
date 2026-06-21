@@ -36,33 +36,6 @@ def login():
             
     return render_template('login.html')
 
-@bp.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        email = f"{username}@worklog.com"
-        if not ext.supabase:
-            flash('Supabase is not configured.', 'error')
-            return render_template('register.html')
-            
-        try:
-            auth_response = ext.supabase.auth.sign_up({
-                "email": email, 
-                "password": password,
-                "options": {
-                    "data": {
-                        "username": username,
-                        "name": username # default name to username
-                    }
-                }
-            })
-            flash('Registration successful! You can now log in.', 'success')
-            return redirect(url_for('auth.login'))
-        except Exception as e:
-            flash(f'Registration failed: {str(e)}', 'error')
-            
-    return render_template('register.html')
 
 @bp.route('/logout')
 def logout():

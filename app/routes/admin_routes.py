@@ -9,10 +9,9 @@ bp = Blueprint('admin', __name__, url_prefix='/admin')
 def dashboard():
     profile = session.get('profile', {})
     is_admin = profile.get('is_admin', False)
-    is_cipl = profile.get('is_cipl', False)
     
-    if not (is_admin or is_cipl):
-        flash('Access denied. Admins or CIPL only.', 'error')
+    if not is_admin:
+        flash('Access denied. Admins only.', 'error')
         return redirect(url_for('dashboard.index'))
         
     sort_by = request.args.get('sort_by', 'timestamp')
@@ -33,6 +32,12 @@ def dashboard():
         elif sort_by == 'status':
             status_priority = {'pending': 0, 'approved': 1, 'rejected': 2}
             all_logs.sort(key=lambda x: status_priority.get(x.get('status', 'pending'), 9), reverse=reverse)
+        elif sort_by == 'type':
+            all_logs.sort(key=lambda x: x.get('work_type', '').lower(), reverse=reverse)
+        elif sort_by == 'date_type':
+            all_logs.sort(key=lambda x: (x.get('timestamp', '')[:10], x.get('work_type', '').lower()), reverse=reverse)
+        elif sort_by == 'name_date':
+            all_logs.sort(key=lambda x: (((x.get('profiles') or {}).get('name') or '').lower(), x.get('timestamp', '')[:10]), reverse=reverse)
             
     except Exception as e:
         all_logs = []
@@ -44,8 +49,8 @@ def dashboard():
 @login_required
 def review_log(log_id):
     profile = session.get('profile', {})
-    if not (profile.get('is_admin') or profile.get('is_cipl')):
-        flash('Access denied.', 'error')
+    if not profile.get('is_admin'):
+        flash('Access denied. Admins only.', 'error')
         return redirect(url_for('dashboard.index'))
         
     action = request.form.get('action') # 'approve' or 'reject'
@@ -117,5 +122,72 @@ def update_user_roles(user_id):
         flash('User updated successfully.', 'success')
     except Exception as e:
         flash(f'Error updating user: {str(e)}', 'error')
+        
+    return redirect(url_for('admin.users_list'))
+
+@bp.route('/users/create', methods=['POST'])
+@login_required
+def create_user():
+    profile = session.get('profile', {})
+    if not profile.get('is_admin'):
+        flash('Access denied. Admins only.', 'error')
+        return redirect(url_for('dashboard.index'))
+        
+    username = request.form.get('username')
+    password = request.form.get('password')
+    email = f"{username}@worklog.com"
+    
+    try:
+        # Use admin auth API to create user without logging them in
+        ext.supabase.auth.admin.create_user({
+            "email": email, 
+            "password": password,
+            "email_confirm": True,
+            "user_metadata": {
+                "username": username,
+                "name": username # default name to username
+            }
+        })
+        flash(f'User {username} created successfully.', 'success')
+    except Exception as e:
+        flash(f'Error creating user: {str(e)}', 'error')
+        
+    return redirect(url_for('admin.users_list'))
+
+@bp.route('/users/delete/<user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    profile = session.get('profile', {})
+    if not profile.get('is_admin'):
+        flash('Access denied. Admins only.', 'error')
+        return redirect(url_for('dashboard.index'))
+        
+    if user_id == session['user']['id']:
+        flash('You cannot delete your own account.', 'error')
+        return redirect(url_for('admin.users_list'))
+        
+    try:
+        ext.supabase.auth.admin.delete_user(user_id)
+        flash('User deleted successfully.', 'success')
+    except Exception as e:
+        flash(f'Error deleting user: {str(e)}', 'error')
+        
+    return redirect(url_for('admin.users_list'))
+
+@bp.route('/users/update_password/<user_id>', methods=['POST'])
+@login_required
+def update_password(user_id):
+    profile = session.get('profile', {})
+    if not profile.get('is_admin'):
+        flash('Access denied. Admins only.', 'error')
+        return redirect(url_for('dashboard.index'))
+        
+    new_password = request.form.get('new_password')
+    
+    try:
+        ext.supabase.auth.admin.update_user_by_id(user_id, {"password": new_password})
+        flash('Password updated successfully.', 'success')
+    except Exception as e:
+        flash(f'Error updating password: {str(e)}', 'error')
         
     return redirect(url_for('admin.users_list'))

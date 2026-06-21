@@ -30,6 +30,9 @@
                     <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Employee Name</option>
                     <option value="hours" {% if sort_by == 'hours' %}selected{% endif %}>Hours Worked</option>
                     <option value="status" {% if sort_by == 'status' %}selected{% endif %}>Status</option>
+                    <option value="type" {% if sort_by == 'type' %}selected{% endif %}>Work Type</option>
+                    <option value="date_type" {% if sort_by == 'date_type' %}selected{% endif %}>Date, then Type</option>
+                    <option value="name_date" {% if sort_by == 'name_date' %}selected{% endif %}>Name, then Date</option>
                 </select>
             </div>
             <div class="flex items-center space-x-2">

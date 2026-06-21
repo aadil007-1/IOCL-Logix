@@ -66,10 +66,10 @@ CREATE POLICY "Users can insert own logs" ON public.work_logs FOR INSERT WITH CH
 CREATE POLICY "Users can update own logs" ON public.work_logs FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own logs" ON public.work_logs FOR DELETE USING (auth.uid() = user_id);
 
--- Admins and CIPL can view all logs
-CREATE POLICY "Admins and CIPL can view all logs" ON public.work_logs FOR SELECT USING (
+-- Admins can view all logs
+CREATE POLICY "Admins can view all logs" ON public.work_logs FOR SELECT USING (
   EXISTS (
     SELECT 1 FROM public.profiles 
-    WHERE id = auth.uid() AND (is_admin = true OR is_cipl = true)
+    WHERE id = auth.uid() AND is_admin = true
   )
 );

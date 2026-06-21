@@ -48,13 +48,12 @@
                     {% if session.get('user') %}
                         <span class="text-sm text-slate-600 dark:text-slate-300">Hello, {{ session.profile.name if session.get('profile') else session.user.email }}</span>
                         <a href="{{ url_for('dashboard.index') }}" class="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Dashboard</a>
-                        {% if session.get('profile') and (session.profile.is_admin or session.profile.is_cipl) %}
+                        {% if session.get('profile') and session.profile.is_admin %}
                             <a href="{{ url_for('admin.dashboard') }}" class="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Admin Area</a>
                         {% endif %}
                         <a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-md">Logout</a>
                     {% else %}
                         <a href="{{ url_for('auth.login') }}" class="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Login</a>
-                        <a href="{{ url_for('auth.register') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-md">Register</a>
                     {% endif %}
                 </div>
             </div>

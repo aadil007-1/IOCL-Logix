@@ -13,13 +13,16 @@
                 <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Password</label>
                 <input type="password" id="password" name="password" required class="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all" placeholder="••••••••">
             </div>
+            <div class="flex justify-center space-x-2 pt-2 pb-4">
+                <button type="button" onclick="document.getElementById('username').value='00507733'; document.getElementById('password').value='hema123';" class="px-2 py-1 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded text-xs hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-300 transition-colors">Demo Employee</button>
+                <button type="button" onclick="document.getElementById('username').value='00036049'; document.getElementById('password').value='priya123';" class="px-2 py-1 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded text-xs hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-300 transition-colors">Demo Admin</button>
+                <button type="button" onclick="document.getElementById('username').value='12345678'; document.getElementById('password').value='CIPL123';" class="px-2 py-1 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded text-xs hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-300 transition-colors">Demo CIPL</button>
+            </div>
             <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-white dark:focus:ring-offset-black transition-all transform hover:scale-[1.02]">
                 Sign In
             </button>
         </form>
-        <p class="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-            Don't have an account? <a href="{{ url_for('auth.register') }}" class="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">Register here</a>
-        </p>
+
     </div>
 </div>
 {% endblock %}
