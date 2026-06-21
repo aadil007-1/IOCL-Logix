@@ -16,7 +16,9 @@ def dashboard():
         
     sort_by = request.args.get('sort_by', 'timestamp')
     order = request.args.get('order', 'desc')
+    group_by = request.args.get('group_by', 'none')
     
+    grouped_logs = []
     try:
         logs_response = ext.supabase.table('work_logs').select('*, profiles(name, username)').order('timestamp', desc=True).execute()
         all_logs = logs_response.data
@@ -39,11 +41,45 @@ def dashboard():
         elif sort_by == 'name_date':
             all_logs.sort(key=lambda x: (((x.get('profiles') or {}).get('name') or '').lower(), x.get('timestamp', '')[:10]), reverse=reverse)
             
+        if all_logs:
+            if group_by == 'date':
+                from collections import OrderedDict
+                groups = OrderedDict()
+                for log in all_logs:
+                    date_key = log.get('timestamp', '')[:10]
+                    if date_key not in groups:
+                        groups[date_key] = []
+                    groups[date_key].append(log)
+                for name, logs_in_group in groups.items():
+                    grouped_logs.append({'group_name': name, 'logs': logs_in_group})
+            elif group_by == 'type':
+                from collections import OrderedDict
+                groups = OrderedDict()
+                for log in all_logs:
+                    type_key = log.get('work_type', 'OTHER')
+                    if type_key not in groups:
+                        groups[type_key] = []
+                    groups[type_key].append(log)
+                for name, logs_in_group in groups.items():
+                    grouped_logs.append({'group_name': name, 'logs': logs_in_group})
+            elif group_by == 'employee':
+                from collections import OrderedDict
+                groups = OrderedDict()
+                for log in all_logs:
+                    emp_name = (log.get('profiles') or {}).get('name') or 'Unknown'
+                    if emp_name not in groups:
+                        groups[emp_name] = []
+                    groups[emp_name].append(log)
+                for name, logs_in_group in groups.items():
+                    grouped_logs.append({'group_name': name, 'logs': logs_in_group})
+            else:
+                grouped_logs = [{'group_name': None, 'logs': all_logs}]
+            
     except Exception as e:
-        all_logs = []
+        grouped_logs = []
         flash(f'Error fetching all logs: {str(e)}', 'error')
         
-    return render_template('admin.html', logs=all_logs, sort_by=sort_by, order=order)
+    return render_template('admin.html', grouped_logs=grouped_logs, sort_by=sort_by, order=order, group_by=group_by)
 
 @bp.route('/review_log/<log_id>', methods=['POST'])
 @login_required

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Work Log Tracker{% endblock %}</title>
+    <title>{% block title %}IOCL Logix{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -30,8 +30,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
-                    <a href="{{ url_for('auth.index') }}" class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-                        WorkLog Pro
+                    <a href="{{ url_for('auth.index') }}" class="flex items-center space-x-2 text-xl font-bold">
+                        <img src="{{ url_for('static', filename='indoil.png') }}" alt="IOCL Logo" class="h-8 w-auto">
+                        <span class="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-blue-600 dark:from-orange-400 dark:to-blue-400">IOCL Logix</span>
                     </a>
                 </div>
                 <div class="flex space-x-4 items-center">
@@ -81,7 +82,7 @@
     <!-- Footer -->
     <footer class="bg-white dark:bg-black border-t border-slate-200 dark:border-zinc-800 mt-auto py-6 transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-slate-500 dark:text-zinc-500">
-            &copy; 2026 WorkLog Pro. All rights reserved.
+            &copy; 2026 IOCL Logix. All rights reserved.
         </div>
     </footer>
 
