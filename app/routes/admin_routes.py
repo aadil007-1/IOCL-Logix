@@ -218,10 +218,18 @@ def update_password(user_id):
         flash('Access denied. Admins only.', 'error')
         return redirect(url_for('dashboard.index'))
         
-    new_password = request.form.get('new_password')
+    new_password = request.form.get('new_password', '').strip()
+    
+    if not new_password or len(new_password) < 6:
+        flash('Password must be at least 6 characters.', 'error')
+        return redirect(url_for('admin.users_list'))
     
     try:
-        ext.supabase.auth.admin.update_user_by_id(user_id, {"password": new_password})
+        from supabase_auth.types import AdminUserAttributes
+        ext.supabase.auth.admin.update_user_by_id(
+            user_id,
+            AdminUserAttributes(password=new_password)
+        )
         flash('Password updated successfully.', 'success')
     except Exception as e:
         flash(f'Error updating password: {str(e)}', 'error')
