@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}User Management - IOCL Logix{% endblock %}
 {% block content %}
-<div class="space-y-8">
+<div class="space-y-8 animate-fade-in">
     <!-- Sub-navigation Tabs -->
-    <div class="flex justify-between items-center border-b border-slate-200 dark:border-zinc-800 pb-4 transition-colors">
+    <div class="flex flex-col md:flex-row justify-between md:items-center border-b border-slate-200 dark:border-zinc-800 pb-4 transition-colors gap-4">
         <div>
             <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Admin Area</h1>
-            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">View and manage organization users.</p>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">View and manage organization users and roles.</p>
         </div>
         <div class="flex space-x-2">
             <a href="{{ url_for('admin.dashboard') }}" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-zinc-800/50 transition-colors">
@@ -17,112 +17,293 @@
             </a>
         </div>
     </div>
-    <!-- Create User Card -->
-    <div class="bg-white dark:bg-zinc-900/30 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 p-6 mb-8 transition-colors">
-        <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Create New User</h2>
-        <form method="POST" action="{{ url_for('admin.create_user') }}" class="flex flex-col sm:flex-row gap-4 items-end">
-            <div class="flex-1">
-                <label for="username" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username / Employee ID</label>
-                <input type="text" id="username" name="username" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
-            </div>
-            <div class="flex-1">
-                <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
-                <input type="password" id="password" name="password" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
-            </div>
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-all h-[42px]">
-                Create User
-            </button>
-        </form>
-    </div>
 
-    <!-- Users Table Card -->
-    <div class="bg-white dark:bg-zinc-900/30 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 overflow-hidden transition-colors">
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-slate-700 dark:text-slate-300">
-                <thead class="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-100 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800">
-                    <tr>
-                        <th scope="col" class="px-6 py-4">Username / ID</th>
-                        <th scope="col" class="px-6 py-4">Email</th>
-                        <th scope="col" class="px-6 py-4">Name</th>
-                        <th scope="col" class="px-6 py-4 text-center">Employee</th>
-                        <th scope="col" class="px-6 py-4 text-center">Admin</th>
-                        <th scope="col" class="px-6 py-4 text-center">CIPL</th>
-                        <th scope="col" class="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr class="border-b border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-slate-900 dark:text-white">
+    <!-- Create User & Search Layout Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Create User Card -->
+        <div class="lg:col-span-1 bg-white dark:bg-zinc-900/30 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 p-6 transition-colors self-start">
+            <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Create New User</h2>
+            <form method="POST" action="{{ url_for('admin.create_user') }}" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username / Employee ID</label>
+                    <input type="text" id="username" name="username" required placeholder="e.g. 00507733" class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white transition-all">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Password</label>
+                    <input type="password" id="password" name="password" required placeholder="••••••••" class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white transition-all">
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center justify-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    <span>Create User</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Users Table Card -->
+        <div class="lg:col-span-2 bg-white dark:bg-zinc-900/30 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 overflow-hidden transition-colors flex flex-col">
+            <!-- Search header -->
+            <div class="p-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 flex items-center">
+                <div class="relative w-full max-w-md">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text" id="userSearch" onkeyup="filterUsers()" placeholder="Search users by name or ID..." class="w-full pl-10 pr-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white transition-all text-sm">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-slate-700 dark:text-slate-300" id="usersTable">
+                    <thead class="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-100 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800">
+                        <tr>
+                            <th scope="col" class="px-6 py-4">Username / ID</th>
+                            <th scope="col" class="px-6 py-4">Name / Email</th>
+                            <th scope="col" class="px-6 py-4">Assigned Roles</th>
+                            <th scope="col" class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-zinc-800">
+                        {% for user in users %}
+                        <tr class="user-row border-b border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors" data-username="{{ user.username }}" data-name="{{ user.name or '' }}">
+                            <td class="px-6 py-4 whitespace-nowrap font-semibold text-slate-900 dark:text-white">
                                 {{ user.username }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400">
-                                {{ user.email }}
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-900 dark:text-white">{{ user.name or 'N/A' }}</div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ user.email }}</div>
                             </td>
                             <td class="px-6 py-4">
-                                <form method="POST" action="{{ url_for('admin.update_user_roles', user_id=user.id) }}" id="form-{{ user.id }}">
-                                <input type="text" name="name" value="{{ user.name or '' }}" required 
-                                       class="px-3 py-1 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 text-sm w-full max-w-[180px]">
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <input type="checkbox" name="is_employee" {% if user.is_employee %}checked{% endif %}
-                                       class="w-4 h-4 text-indigo-600 bg-white dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 rounded focus:ring-indigo-500">
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <input type="checkbox" name="is_admin" {% if user.is_admin %}checked{% endif %}
-                                       class="w-4 h-4 text-indigo-600 bg-white dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 rounded focus:ring-indigo-500">
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <input type="checkbox" name="is_cipl" {% if user.is_cipl %}checked{% endif %}
-                                       class="w-4 h-4 text-indigo-600 bg-white dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 rounded focus:ring-indigo-500">
-                            </td>
-                            <td class="px-6 py-4 text-right whitespace-nowrap relative">
-                                <button type="button" onclick="document.getElementById('dropdown-{{ user.id }}').classList.toggle('hidden')" class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 focus:outline-none">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path></svg>
-                                </button>
-                                <!-- Dropdown menu -->
-                                <div id="dropdown-{{ user.id }}" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-800 rounded-md shadow-lg z-50 border border-slate-200 dark:border-zinc-700 whitespace-normal text-left">
-                                    <div class="py-1 text-left">
-                                        <!-- Update Roles Form (Now wrapped nicely) -->
-                                        <div class="px-4 py-2 border-b border-slate-100 dark:border-zinc-700">
-                                            <button type="submit" form="form-{{ user.id }}" class="w-full text-left text-sm text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
-                                                Update Roles
-                                            </button>
-                                        </div>
-                                        
-                                        <!-- Set Password Form -->
-                                        <div class="px-4 py-3 border-b border-slate-100 dark:border-zinc-700">
-                                            <form method="POST" action="{{ url_for('admin.update_password', user_id=user.id) }}" class="flex flex-col space-y-2">
-                                                <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Change Password</label>
-                                                <input type="password" name="new_password" placeholder="New Password" required class="px-3 py-1.5 text-xs w-full bg-slate-50 dark:bg-zinc-900/50 border border-slate-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all">
-                                                <button type="submit" class="w-full text-center text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-3 rounded-lg shadow-sm transition-all duration-150">
-                                                    Set New Password
-                                                </button>
-                                            </form>
-                                        </div>
-                                        
-                                        <!-- Delete Form -->
-                                        <div class="px-4 py-2">
-                                            <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return confirm('Are you absolutely sure you want to delete this user?');">
-                                                <button type="submit" class="w-full text-left text-sm text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 font-medium">
-                                                    Delete User
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    {% if user.is_admin %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50">Admin</span>
+                                    {% endif %}
+                                    {% if user.is_employee %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50">Employee</span>
+                                    {% endif %}
+                                    {% if user.is_cipl %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50">CIPL</span>
+                                    {% endif %}
+                                    {% if not user.is_admin and not user.is_employee and not user.is_cipl %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-850 dark:bg-zinc-800 dark:text-slate-400">None</span>
+                                    {% endif %}
                                 </div>
                             </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">
-                            <p>No users found in the system.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            <td class="px-6 py-4 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center space-x-2">
+                                    <!-- Edit Roles Button -->
+                                    <button type="button" 
+                                            onclick="openEditModal('{{ user.id }}', '{{ user.username }}', '{{ user.name or '' }}', {{ 'true' if user.is_employee else 'false' }}, {{ 'true' if user.is_admin else 'false' }}, {{ 'true' if user.is_cipl else 'false' }})" 
+                                            class="inline-flex items-center px-3 py-1.5 border border-slate-350 dark:border-zinc-700 text-xs font-medium rounded-lg text-slate-700 dark:text-slate-300 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors focus:outline-none">
+                                        <svg class="w-4 h-4 mr-1 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        Edit Roles
+                                    </button>
+                                    
+                                    <!-- Set Password Button -->
+                                    <button type="button" 
+                                            onclick="openPasswordModal('{{ user.id }}', '{{ user.username }}', '{{ user.name or '' }}')" 
+                                            class="inline-flex items-center px-3 py-1.5 border border-slate-355 dark:border-zinc-700 text-xs font-medium rounded-lg text-slate-700 dark:text-slate-300 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors focus:outline-none">
+                                        <svg class="w-4 h-4 mr-1 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                        Set Pass
+                                    </button>
+
+                                    <!-- Delete Form -->
+                                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return confirm('Are you absolutely sure you want to delete user {{ user.username }} ({{ user.name or \'\' }})?');" class="inline">
+                                        <button type="submit" 
+                                                {% if user.id == session['user']['id'] %}disabled class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-slate-400 bg-slate-100 dark:bg-zinc-800 dark:text-zinc-650 cursor-not-allowed" title="You cannot delete yourself."{% else %}class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/40 transition-colors focus:outline-none"{% endif %}>
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
+                                <svg class="w-12 h-12 mx-auto mb-3 text-slate-350 dark:text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                <p class="text-sm font-medium">No users found in the system.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Edit Roles Modal -->
+<div id="editRolesModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-black/80 overflow-y-auto h-full w-full z-50 backdrop-blur-sm transition-all flex items-center justify-center">
+    <div class="relative p-8 border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 transition-colors mx-4">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Edit User Roles</h3>
+            <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <form id="editRolesForm" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Username / ID</label>
+                <input type="text" id="edit_username" disabled class="w-full px-4 py-2 bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-lg text-slate-650 dark:text-slate-500 font-medium cursor-not-allowed">
+            </div>
+            <div>
+                <label for="edit_name" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Display Name</label>
+                <input type="text" id="edit_name" name="name" required class="w-full px-4 py-2 bg-white dark:bg-zinc-955 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white transition-all">
+            </div>
+            <div class="space-y-3 pt-2">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Roles Configuration</label>
+                
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" id="edit_is_employee" name="is_employee" class="w-4 h-4 text-indigo-600 bg-white dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 rounded focus:ring-indigo-500">
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Employee Role</span>
+                </label>
+                
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" id="edit_is_admin" name="is_admin" class="w-4 h-4 text-indigo-600 bg-white dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 rounded focus:ring-indigo-500">
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Admin Role</span>
+                </label>
+                
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" id="edit_is_cipl" name="is_cipl" class="w-4 h-4 text-indigo-600 bg-white dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 rounded focus:ring-indigo-500">
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">CIPL Role</span>
+                </label>
+            </div>
+            <div class="flex items-center justify-end space-x-3 pt-6 border-t border-slate-200 dark:border-zinc-800">
+                <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-850 dark:hover:bg-zinc-800 dark:text-slate-200 text-sm font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Set Password Modal -->
+<div id="setPasswordModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-black/80 overflow-y-auto h-full w-full z-50 backdrop-blur-sm transition-all flex items-center justify-center">
+    <div class="relative p-8 border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 transition-colors mx-4">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Force Reset Password</h3>
+            <button onclick="closePasswordModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <form id="setPasswordForm" method="POST" class="space-y-4" onsubmit="return validateAdminPasswordForm(this);">
+            <div>
+                <label class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">User Details</label>
+                <div class="text-sm font-medium text-slate-800 dark:text-slate-200" id="pass_user_details"></div>
+            </div>
+            <div>
+                <label for="admin_new_password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Password</label>
+                <input type="password" id="admin_new_password" name="new_password" required minlength="6" placeholder="Min 6 characters" class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white transition-all">
+            </div>
+            <div>
+                <label for="admin_confirm_password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirm Password</label>
+                <input type="password" id="admin_confirm_password" name="confirm_password" required minlength="6" placeholder="Min 6 characters" class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white transition-all">
+            </div>
+            <div id="admin_password_error" class="hidden text-xs text-red-650 dark:text-red-400 font-semibold"></div>
+            <div class="flex items-center justify-end space-x-3 pt-6 border-t border-slate-200 dark:border-zinc-800">
+                <button type="button" onclick="closePasswordModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-850 dark:hover:bg-zinc-800 dark:text-slate-200 text-sm font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
+                    Set New Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Search Filter
+    function filterUsers() {
+        const searchInput = document.getElementById('userSearch').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.user-row');
+        
+        rows.forEach(row => {
+            const username = row.getAttribute('data-username').toLowerCase();
+            const name = row.getAttribute('data-name').toLowerCase();
+            
+            if (username.includes(searchInput) || name.includes(searchInput)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Modal Control Functions
+    function openEditModal(userId, username, name, isEmployee, isAdmin, isCipl) {
+        document.getElementById('editRolesForm').action = "/admin/users/update/" + userId;
+        document.getElementById('edit_username').value = username;
+        document.getElementById('edit_name').value = name;
+        document.getElementById('edit_is_employee').checked = isEmployee;
+        document.getElementById('edit_is_admin').checked = isAdmin;
+        document.getElementById('edit_is_cipl').checked = isCipl;
+        
+        // Disable admin checkbox for self-editing to prevent locking yourself out
+        const selfUserId = "{{ session['user']['id'] }}";
+        const adminCheckbox = document.getElementById('edit_is_admin');
+        if (userId === selfUserId) {
+            adminCheckbox.disabled = true;
+            adminCheckbox.title = "You cannot remove your own admin privileges here.";
+            // Add a hidden field to make sure is_admin is still sent as True
+            let hiddenAdmin = document.getElementById('self_admin_hidden');
+            if (!hiddenAdmin) {
+                hiddenAdmin = document.createElement('input');
+                hiddenAdmin.type = 'hidden';
+                hiddenAdmin.name = 'is_admin';
+                hiddenAdmin.value = 'on';
+                hiddenAdmin.id = 'self_admin_hidden';
+                document.getElementById('editRolesForm').appendChild(hiddenAdmin);
+            }
+        } else {
+            adminCheckbox.disabled = false;
+            adminCheckbox.title = "";
+            const hiddenAdmin = document.getElementById('self_admin_hidden');
+            if (hiddenAdmin) {
+                hiddenAdmin.remove();
+            }
+        }
+        
+        document.getElementById('editRolesModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editRolesModal').classList.add('hidden');
+    }
+
+    function openPasswordModal(userId, username, name) {
+        document.getElementById('setPasswordForm').action = "/admin/users/update_password/" + userId;
+        document.getElementById('pass_user_details').textContent = `${username} (${name || 'No Display Name'})`;
+        document.getElementById('admin_new_password').value = '';
+        document.getElementById('admin_confirm_password').value = '';
+        document.getElementById('admin_password_error').classList.add('hidden');
+        document.getElementById('setPasswordModal').classList.remove('hidden');
+    }
+
+    function closePasswordModal() {
+        document.getElementById('setPasswordModal').classList.add('hidden');
+    }
+
+    function validateAdminPasswordForm(form) {
+        const pass = form.new_password.value;
+        const confirm = form.confirm_password.value;
+        const errorDiv = document.getElementById('admin_password_error');
+        if (pass.length < 6) {
+            errorDiv.textContent = 'Password must be at least 6 characters.';
+            errorDiv.classList.remove('hidden');
+            return false;
+        }
+        if (pass !== confirm) {
+            errorDiv.textContent = 'Passwords do not match.';
+            errorDiv.classList.remove('hidden');
+            return false;
+        }
+        errorDiv.classList.add('hidden');
+        return true;
+    }
+</script>
 {% endblock %}

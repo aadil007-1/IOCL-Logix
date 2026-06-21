@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from app.middleware.auth import login_required
 import app.extensions as ext
 
 bp = Blueprint('auth', __name__)
@@ -42,3 +43,31 @@ def logout():
     session.clear()
     flash('Logged out successfully.', 'info')
     return redirect(url_for('auth.login'))
+
+
+@bp.route('/change_password', methods=['POST'])
+@login_required
+def change_password():
+    new_password = request.form.get('new_password', '').strip()
+    confirm_password = request.form.get('confirm_password', '').strip()
+    
+    if not new_password or len(new_password) < 6:
+        flash('Password must be at least 6 characters long.', 'error')
+        return redirect(url_for('dashboard.index'))
+        
+    if new_password != confirm_password:
+        flash('Passwords do not match.', 'error')
+        return redirect(url_for('dashboard.index'))
+        
+    try:
+        from supabase_auth.types import AdminUserAttributes
+        ext.supabase.auth.admin.update_user_by_id(
+            session['user']['id'],
+            AdminUserAttributes(password=new_password)
+        )
+        flash('Your password has been changed successfully.', 'success')
+    except Exception as e:
+        flash(f'Error changing password: {str(e)}', 'error')
+        
+    return redirect(url_for('dashboard.index'))
+

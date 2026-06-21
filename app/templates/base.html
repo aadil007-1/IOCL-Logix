@@ -52,6 +52,7 @@
                         {% if session.get('profile') and session.profile.is_admin %}
                             <a href="{{ url_for('admin.dashboard') }}" class="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Admin Area</a>
                         {% endif %}
+                        <button onclick="document.getElementById('changePasswordModal').classList.remove('hidden')" class="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none">Change Password</button>
                         <a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-md">Logout</a>
                     {% else %}
                         <a href="{{ url_for('auth.login') }}" class="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Login</a>
@@ -113,5 +114,57 @@
             }
         });
     </script>
+
+    {% if session.get('user') %}
+    <!-- Global Change Password Modal -->
+    <div id="changePasswordModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-black/80 overflow-y-auto h-full w-full z-50 backdrop-blur-sm transition-all flex items-center justify-center">
+        <div class="relative p-8 border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 transition-colors mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Change Your Password</h3>
+                <button onclick="document.getElementById('changePasswordModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form method="POST" action="{{ url_for('auth.change_password') }}" class="space-y-4" onsubmit="return validateGlobalPasswordForm(this);">
+                <div>
+                    <label for="global_new_password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Password</label>
+                    <input type="password" id="global_new_password" name="new_password" required minlength="6" class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                </div>
+                <div>
+                    <label for="global_confirm_password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirm New Password</label>
+                    <input type="password" id="global_confirm_password" name="confirm_password" required minlength="6" class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                </div>
+                <div id="global_password_error" class="hidden text-xs text-red-600 dark:text-red-400 font-medium"></div>
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                    <button type="button" onclick="document.getElementById('changePasswordModal').classList.add('hidden')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-slate-200 text-sm font-medium rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
+                        Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        function validateGlobalPasswordForm(form) {
+            const pass = form.new_password.value;
+            const confirm = form.confirm_password.value;
+            const errorDiv = document.getElementById('global_password_error');
+            if (pass.length < 6) {
+                errorDiv.textContent = 'Password must be at least 6 characters long.';
+                errorDiv.classList.remove('hidden');
+                return false;
+            }
+            if (pass !== confirm) {
+                errorDiv.textContent = 'Passwords do not match.';
+                errorDiv.classList.remove('hidden');
+                return false;
+            }
+            errorDiv.classList.add('hidden');
+            return true;
+        }
+    </script>
+    {% endif %}
 </body>
 </html>
