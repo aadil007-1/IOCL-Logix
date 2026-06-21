@@ -1,70 +1,246 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard - IOCL Logix{% endblock %}
 {% block content %}
-<div class="space-y-8">
-    <div class="flex justify-between items-end border-b border-slate-200 dark:border-zinc-800 pb-4 transition-colors">
+
+<!-- Load Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- CSS Styling for Custom Scrollbar and Print layouts -->
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #3f3f46;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    @media print {
+        /* Hide everything by default for print layout */
+        body * {
+            visibility: hidden;
+        }
+        /* Show print area and all its children */
+        #printArea, #printArea * {
+            visibility: visible;
+        }
+        #printArea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        /* Page layout */
+        @page {
+            size: portrait;
+            margin: 1.5cm;
+        }
+        /* Table headers repeat on multi-page PDF */
+        thead {
+            display: table-header-group;
+        }
+        tr {
+            page-break-inside: avoid;
+        }
+    }
+</style>
+
+<!-- Main Container (Hidden during printing except print area wrapper) -->
+<div class="space-y-8 no-print">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 dark:border-zinc-800 pb-4 transition-colors gap-4">
         <div>
             <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Your Dashboard</h1>
             <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Track and manage your daily work logs.</p>
         </div>
-        <button onclick="document.getElementById('logModal').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-all shadow-md flex items-center space-x-2 transform hover:scale-[1.02]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-            </svg>
-            <span>Log Work</span>
-        </button>
+        <div class="flex items-center space-x-3 w-full md:w-auto">
+            <button onclick="toggleAnalytics()" class="flex-grow md:flex-grow-0 inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-350 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/80 text-slate-700 dark:text-slate-300 transition-colors gap-2 shadow-sm focus:outline-none">
+                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                </svg>
+                <span id="toggleAnalyticsText">Hide Analytics</span>
+            </button>
+            <button onclick="document.getElementById('logModal').classList.remove('hidden')" class="flex-grow md:flex-grow-0 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-all shadow-md flex items-center justify-center space-x-2 transform hover:scale-[1.02]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                <span>Log Work</span>
+            </button>
+        </div>
     </div>
 
-    <!-- Log Modal -->
-    <div id="logModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-black/80 overflow-y-auto h-full w-full z-50 backdrop-blur-sm transition-all">
-        <div class="relative top-20 mx-auto p-8 border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 transition-colors">
-            <div class="mt-3">
-                <h3 class="text-xl leading-6 font-semibold text-slate-900 dark:text-white mb-6">Log New Work</h3>
-                <form method="POST" action="{{ url_for('dashboard.log_work') }}" class="space-y-5">
+    <!-- Option 1: Interactive Personal Analytics Section -->
+    <div id="analyticsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all duration-300">
+        <!-- Stat Cards -->
+        <div class="space-y-4">
+            <!-- Card 1: Total Hours -->
+            <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/80 shadow-sm transition-all flex flex-col justify-between relative overflow-hidden">
+                <!-- Accent Top Border -->
+                <div class="absolute top-0 left-0 right-0 h-[3px] bg-blue-500"></div>
+                <div class="flex justify-between items-start">
                     <div>
-                        <label for="timestamp" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Timestamp</label>
-                        <input type="datetime-local" id="timestamp" name="timestamp" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                        <span class="text-xs font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider">Total Hours Logged</span>
+                        <div class="text-3xl font-extrabold mt-2 text-slate-900 dark:text-white tracking-tight" id="statTotalHours">0.00</div>
                     </div>
+                    <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-3" id="statLogCount">0 logs total</p>
+            </div>
+            <!-- Card 2: Approved Hours -->
+            <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/80 shadow-sm transition-all flex flex-col justify-between relative overflow-hidden">
+                <!-- Accent Top Border -->
+                <div class="absolute top-0 left-0 right-0 h-[3px] bg-emerald-500"></div>
+                <div class="flex justify-between items-start">
                     <div>
-                        <label for="hours" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hours Worked</label>
-                        <input type="number" id="hours" name="hours" step="0.25" min="0.25" max="24" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                        <span class="text-xs font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider">Approved Hours</span>
+                        <div class="text-3xl font-extrabold mt-2 text-slate-900 dark:text-white tracking-tight" id="statApprovedHours">0.00</div>
                     </div>
+                    <div class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-3" id="statApprovalRate">0% approval rate</p>
+            </div>
+            <!-- Card 3: Avg Hours / Session -->
+            <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/80 shadow-sm transition-all flex flex-col justify-between relative overflow-hidden">
+                <!-- Accent Top Border -->
+                <div class="absolute top-0 left-0 right-0 h-[3px] bg-orange-500"></div>
+                <div class="flex justify-between items-start">
                     <div>
-                        <label for="work_type" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Type of Work</label>
-                        <select id="work_type" name="work_type" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
-                            {% if session.profile.is_cipl %}
-                            <option value="NETWORK">NETWORK</option>
-                            <option value="SERVICE">SERVICE</option>
-                            <option value="MAINTENANCE">MAINTENANCE</option>
-                            <option value="SUPPORT">SUPPORT</option>
-                            <option value="OTHER">OTHER</option>
-                            {% else %}
-                            <option value="HO">HO</option>
-                            <option value="RBCSC">RBCSC</option>
-                            <option value="SRO">SRO</option>
-                            {% endif %}
-                        </select>
+                        <span class="text-xs font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider">Avg. Hours / Log</span>
+                        <div class="text-3xl font-extrabold mt-2 text-slate-900 dark:text-white tracking-tight" id="statAvgHours">0.00</div>
                     </div>
-                    <div>
-                        <label for="description" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Description</label>
-                        <textarea id="description" name="description" rows="3" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white resize-none"></textarea>
+                    <div class="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
                     </div>
-                    <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
-                        <button type="button" onclick="document.getElementById('logModal').classList.add('hidden')" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-slate-200 text-sm font-medium rounded-lg transition-colors">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
-                            Save Log
-                        </button>
-                    </div>
-                </form>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-3">hours per daily session</p>
+            </div>
+        </div>
+        
+        <!-- Doughnut Chart: Work Type -->
+        <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-zinc-800 transition-colors flex flex-col justify-between">
+            <h4 class="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-4 uppercase tracking-wider">Work Type Distribution</h4>
+            <div class="relative flex-grow flex items-center justify-center min-h-[190px]">
+                <canvas id="workTypeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Bar Chart: Hours Logged over Last 7 Days -->
+        <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-zinc-800 transition-colors flex flex-col justify-between">
+            <h4 class="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-4 uppercase tracking-wider">Activity (Last 7 Days)</h4>
+            <div class="relative flex-grow flex items-center justify-center min-h-[190px]">
+                <canvas id="dailyHoursChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Logs Table -->
+    <!-- Option 2: Filters & Timesheet Export Card -->
+    <div id="filterExportCard" class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-zinc-800 transition-colors">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 border-b border-slate-100 dark:border-zinc-800/60 pb-4">
+            <div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Filters & Report Export</h3>
+                <p class="text-xs text-slate-550 dark:text-zinc-400 mt-0.5">Filter your timesheet history and compile exports.</p>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <button onclick="exportToCSV()" class="flex-grow md:flex-grow-0 inline-flex items-center justify-center px-4 py-2 border border-slate-300 dark:border-zinc-700 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all gap-1.5 shadow-sm focus:outline-none">
+                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    CSV Export
+                </button>
+                <button onclick="printTimesheet()" class="flex-grow md:flex-grow-0 inline-flex items-center justify-center px-4 py-2 border border-slate-300 dark:border-zinc-700 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all gap-1.5 shadow-sm focus:outline-none">
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                    </svg>
+                    Print PDF Report
+                </button>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Search field -->
+            <div>
+                <label for="searchQuery" class="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-1 uppercase tracking-wider">Search Description</label>
+                <input type="text" id="searchQuery" oninput="applyFilters()" placeholder="Search description keyword..." class="w-full text-xs px-3 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-650 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+            </div>
+            <!-- Work Type dropdown -->
+            <div>
+                <label for="filterWorkType" class="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-1 uppercase tracking-wider">Work Type</label>
+                <select id="filterWorkType" onchange="applyFilters()" class="w-full text-xs px-3 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                    <option value="ALL">All Types</option>
+                    {% if session.profile.is_cipl %}
+                    <option value="NETWORK">NETWORK</option>
+                    <option value="SERVICE">SERVICE</option>
+                    <option value="MAINTENANCE">MAINTENANCE</option>
+                    <option value="SUPPORT">SUPPORT</option>
+                    <option value="OTHER">OTHER</option>
+                    {% else %}
+                    <option value="HO">HO</option>
+                    <option value="RBCSC">RBCSC</option>
+                    <option value="SRO">SRO</option>
+                    {% endif %}
+                </select>
+            </div>
+            <!-- Status dropdown -->
+            <div>
+                <label for="filterStatus" class="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-1 uppercase tracking-wider">Status</label>
+                <select id="filterStatus" onchange="applyFilters()" class="w-full text-xs px-3 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                    <option value="ALL">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+            <!-- Date range selection -->
+            <div>
+                <label for="filterDateRange" class="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-1 uppercase tracking-wider">Date Range</label>
+                <select id="filterDateRange" onchange="toggleCustomDates(); applyFilters();" class="w-full text-xs px-3 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                    <option value="ALL">All Time</option>
+                    <option value="WEEK">This Week (Last 7 Days)</option>
+                    <option value="MONTH">This Month</option>
+                    <option value="CUSTOM">Custom Range...</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Custom date picking containers -->
+        <div id="customDatesContainer" class="hidden grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/40">
+            <div>
+                <label for="startDate" class="block text-[10px] font-medium text-slate-550 dark:text-zinc-450 mb-1">Start Date</label>
+                <input type="date" id="startDate" onchange="applyFilters()" class="w-full text-xs px-3 py-1.5 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+            </div>
+            <div>
+                <label for="endDate" class="block text-[10px] font-medium text-slate-550 dark:text-zinc-450 mb-1">End Date</label>
+                <input type="date" id="endDate" onchange="applyFilters()" class="w-full text-xs px-3 py-1.5 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Logs List Table -->
     <div class="bg-white dark:bg-zinc-900/30 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 overflow-hidden transition-colors">
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-sm text-left text-slate-700 dark:text-slate-300">
                 <thead class="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-100 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800">
                     <tr>
@@ -76,20 +252,26 @@
                         <th scope="col" class="px-6 py-4 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="logsTableBody" class="divide-y divide-slate-200 dark:divide-zinc-800/80">
                     {% for log in logs %}
-                    <tr class="border-b border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors">
+                    <tr class="log-row border-b border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors"
+                        data-id="{{ log.id }}"
+                        data-timestamp="{{ log.timestamp }}"
+                        data-worktype="{{ log.work_type }}"
+                        data-hours="{{ log.hours }}"
+                        data-description="{{ log.description }}"
+                        data-status="{{ log.status }}">
                         <td class="px-6 py-4 whitespace-nowrap">{{ log.timestamp[:16].replace('T', ' ') }}</td>
                         <td class="px-6 py-4">
                             <span class="px-2 py-1 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 text-xs rounded-full border border-slate-200 dark:border-zinc-700">{{ log.work_type }}</span>
                         </td>
-                        <td class="px-6 py-4 font-medium text-indigo-600 dark:text-indigo-400">{{ log.hours }}</td>
-                        <td class="px-6 py-4">{{ log.description }}</td>
+                        <td class="px-6 py-4 font-semibold text-indigo-600 dark:text-indigo-400">{{ log.hours }}</td>
+                        <td class="px-6 py-4 max-w-xs truncate" title="{{ log.description }}">{{ log.description }}</td>
                         <td class="px-6 py-4">
                             {% if log.status == 'approved' %}
-                            <span class="px-2 py-1 bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900/50 text-xs rounded-full">Approved</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900/50 text-xs rounded-full">Approved</span>
                             {% elif log.status == 'rejected' %}
-                            <span class="px-2 py-1 bg-red-100 text-red-800 border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900/50 text-xs rounded-full">Rejected</span>
+                            <span class="px-2 py-1 bg-red-100 text-red-800 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50 text-xs rounded-full">Rejected</span>
                             {% else %}
                             <span class="px-2 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 dark:bg-yellow-950/30 dark:text-yellow-400 dark:border-yellow-900/50 text-xs rounded-full">Pending</span>
                             {% endif %}
@@ -100,19 +282,519 @@
                             </form>
                         </td>
                     </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">
+                    {% endfor %}
+                    
+                    <!-- Dynamic Empty State Row -->
+                    <tr id="emptyStateRow" class="hidden">
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
                             <svg class="mx-auto h-12 w-12 text-slate-300 dark:text-slate-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            <p>No work logs found. Click "Log Work" to add one.</p>
+                            <p class="text-sm font-medium">No work logs match your selected filter criteria.</p>
                         </td>
                     </tr>
-                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<!-- Printable Timesheet Document Area (Hidden on screen, populated dynamically on print command) -->
+<div id="printArea" class="hidden print-only text-slate-900 bg-white p-4">
+    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold uppercase tracking-wide text-slate-950">IOCL Logix Work Timesheet</h1>
+            <p class="text-xs text-slate-600 mt-1">Generated: <span id="printReportDate">2026-06-22</span></p>
+        </div>
+        <div class="text-right">
+            <h2 class="text-base font-bold text-slate-800">{{ session.profile.name or 'Employee' }}</h2>
+            <p class="text-xs text-slate-600">ID: {{ session.profile.username }}</p>
+            <p class="text-xs text-slate-600">Email: {{ session.profile.email }}</p>
+            <p class="text-xs text-slate-650 font-semibold mt-0.5">Role: {% if session.profile.is_admin %}Admin{% endif %}{% if session.profile.is_employee %} Employee{% endif %}{% if session.profile.is_cipl %} CIPL{% endif %}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4 my-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+        <div>
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Hours Compiled</span>
+            <div class="text-2xl font-extrabold text-slate-850 mt-0.5" id="printTotalHours">0.00</div>
+        </div>
+        <div>
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Approved Hours</span>
+            <div class="text-2xl font-extrabold text-slate-850 mt-0.5" id="printApprovedHours">0.00</div>
+        </div>
+        <div>
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Overall Approval Rate</span>
+            <div class="text-2xl font-extrabold text-slate-850 mt-0.5" id="printApprovalRate">0%</div>
+        </div>
+    </div>
+
+    <!-- Print Table -->
+    <table class="w-full text-xs text-left border-collapse border border-slate-300">
+        <thead>
+            <tr class="bg-slate-100 border-b border-slate-300">
+                <th class="border border-slate-300 p-2 font-bold uppercase">Timestamp</th>
+                <th class="border border-slate-300 p-2 font-bold uppercase">Work Type</th>
+                <th class="border border-slate-300 p-2 font-bold uppercase text-center">Hours</th>
+                <th class="border border-slate-300 p-2 font-bold uppercase">Description</th>
+                <th class="border border-slate-300 p-2 font-bold uppercase">Status</th>
+            </tr>
+        </thead>
+        <tbody id="printTableBody">
+            <!-- Populated via javascript before printing -->
+        </tbody>
+    </table>
+    
+    <div class="flex justify-between items-center mt-12 pt-8 border-t border-slate-200 text-[10px] text-slate-500">
+        <div>&copy; 2026 IOCL Logix - Internal Document</div>
+        <div class="flex space-x-12">
+            <div class="text-center w-24 border-t border-slate-400 pt-1 mt-6">Employee Signature</div>
+            <div class="text-center w-24 border-t border-slate-400 pt-1 mt-6">Approver Signature</div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal log new work (Stateful Popup) -->
+<div id="logModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-black/80 overflow-y-auto h-full w-full z-50 backdrop-blur-sm transition-all flex items-center justify-center">
+    <div class="relative p-8 border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 transition-colors mx-4">
+        <div>
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Log New Work</h3>
+                <button onclick="document.getElementById('logModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-655 dark:hover:text-slate-250">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form method="POST" action="{{ url_for('dashboard.log_work') }}" class="space-y-5">
+                <div>
+                    <label for="timestamp" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Timestamp</label>
+                    <input type="datetime-local" id="timestamp" name="timestamp" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                </div>
+                <div>
+                    <label for="hours" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hours Worked</label>
+                    <input type="number" id="hours" name="hours" step="0.25" min="0.25" max="24" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                </div>
+                <div>
+                    <label for="work_type" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Type of Work</label>
+                    <select id="work_type" name="work_type" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                        {% if session.profile.is_cipl %}
+                        <option value="NETWORK">NETWORK</option>
+                        <option value="SERVICE">SERVICE</option>
+                        <option value="MAINTENANCE">MAINTENANCE</option>
+                        <option value="SUPPORT">SUPPORT</option>
+                        <option value="OTHER">OTHER</option>
+                        {% else %}
+                        <option value="HO">HO</option>
+                        <option value="RBCSC">RBCSC</option>
+                        <option value="SRO">SRO</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Description</label>
+                    <textarea id="description" name="description" rows="3" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white resize-none" placeholder="Detail what tasks were completed..."></textarea>
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                    <button type="button" onclick="document.getElementById('logModal').classList.add('hidden')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-slate-200 text-sm font-medium rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
+                        Save Log
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Controller Script (Jinja2 Serialized data + DOM Controls) -->
+<script>
+    // 1. Load the backend list values into standard JS object array
+    const rawLogs = {{ logs|tojson|safe if logs else '[]' }};
+    
+    // Global references for charts
+    let workTypeChartObj = null;
+    let dailyHoursChartObj = null;
+    let isAnalyticsVisible = true;
+
+    // Standard Theme Observer for Chart redraws
+    const targetNode = document.documentElement;
+    const config = { attributes: true, attributeFilter: ['class'] };
+    const callback = function(mutationsList, observer) {
+        for(let mutation of mutationsList) {
+            if (mutation.attributeName === 'class') {
+                // Class changed (theme flipped), reload charts with native colors
+                rebuildCharts(getFilteredLogs());
+            }
+        }
+    };
+    const observer = new MutationObserver(callback);
+    observer.observe(targetNode, config);
+
+    // Initial setup on DOM Ready
+    window.addEventListener('DOMContentLoaded', () => {
+        // Set default datetime to now
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('timestamp').value = now.toISOString().slice(0, 16);
+        
+        // Initialize dashboard UI
+        applyFilters();
+    });
+
+    // Toggle analytics view on/off
+    function toggleAnalytics() {
+        const container = document.getElementById('analyticsContainer');
+        const btnText = document.getElementById('toggleAnalyticsText');
+        if (isAnalyticsVisible) {
+            container.classList.add('hidden');
+            btnText.textContent = 'Show Analytics';
+            isAnalyticsVisible = false;
+        } else {
+            container.classList.remove('hidden');
+            btnText.textContent = 'Hide Analytics';
+            isAnalyticsVisible = true;
+            setTimeout(() => {
+                rebuildCharts(getFilteredLogs());
+            }, 100);
+        }
+    }
+
+    // Toggle Date Range inputs display
+    function toggleCustomDates() {
+        const range = document.getElementById('filterDateRange').value;
+        const customContainer = document.getElementById('customDatesContainer');
+        if (range === 'CUSTOM') {
+            customContainer.classList.remove('hidden');
+        } else {
+            customContainer.classList.add('hidden');
+        }
+    }
+
+    // Filter computation
+    function getFilteredLogs() {
+        const search = document.getElementById('searchQuery').value.toLowerCase().trim();
+        const workType = document.getElementById('filterWorkType').value;
+        const status = document.getElementById('filterStatus').value;
+        const dateRange = document.getElementById('filterDateRange').value;
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        
+        const now = new Date();
+        
+        return rawLogs.filter(log => {
+            // Search text
+            if (search && !log.description.toLowerCase().includes(search) && !log.work_type.toLowerCase().includes(search)) {
+                return false;
+            }
+            // Work Type
+            if (workType !== 'ALL' && log.work_type !== workType) {
+                return false;
+            }
+            // Status
+            if (status !== 'ALL' && log.status !== status) {
+                return false;
+            }
+            // Date Range
+            if (dateRange === 'WEEK') {
+                const logDate = new Date(log.timestamp);
+                const diffTime = Math.abs(now - logDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays > 7) return false;
+            } else if (dateRange === 'MONTH') {
+                const logDate = new Date(log.timestamp);
+                if (logDate.getMonth() !== now.getMonth() || logDate.getFullYear() !== now.getFullYear()) {
+                    return false;
+                }
+            } else if (dateRange === 'CUSTOM') {
+                const logDateStr = log.timestamp.split('T')[0];
+                if (start && logDateStr < start) return false;
+                if (end && logDateStr > end) return false;
+            }
+            
+            return true;
+        });
+    }
+
+    // Update UI Stats, Tables, and Charts
+    function applyFilters() {
+        const filtered = getFilteredLogs();
+        const filteredIds = new Set(filtered.map(l => l.id));
+        
+        // Show/hide Table rows
+        const rows = document.querySelectorAll('.log-row');
+        let visibleCount = 0;
+        rows.forEach(row => {
+            const id = row.getAttribute('data-id');
+            if (filteredIds.has(id)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Handle empty state row
+        const emptyRow = document.getElementById('emptyStateRow');
+        if (visibleCount === 0) {
+            emptyRow.classList.remove('hidden');
+        } else {
+            emptyRow.classList.add('hidden');
+        }
+        
+        // Refresh values and charts
+        updateStats(filtered);
+        rebuildCharts(filtered);
+    }
+
+    // Recalculate stats cards
+    function updateStats(filtered) {
+        let totalHours = 0;
+        let approvedHours = 0;
+        
+        filtered.forEach(log => {
+            const hrs = parseFloat(log.hours) || 0;
+            totalHours += hrs;
+            if (log.status === 'approved') {
+                approvedHours += hrs;
+            }
+        });
+        
+        const logCount = filtered.length;
+        const avgHours = logCount > 0 ? (totalHours / logCount) : 0;
+        const approvalRate = totalHours > 0 ? Math.round((approvedHours / totalHours) * 100) : 0;
+        
+        // Populate standard cards
+        document.getElementById('statTotalHours').textContent = totalHours.toFixed(2);
+        document.getElementById('statLogCount').textContent = `${logCount} session log${logCount !== 1 ? 's' : ''}`;
+        
+        document.getElementById('statApprovedHours').textContent = approvedHours.toFixed(2);
+        document.getElementById('statApprovalRate').textContent = `${approvalRate}% approval rate`;
+        
+        document.getElementById('statAvgHours').textContent = avgHours.toFixed(2);
+    }
+
+    // Draw and configure Chart.js graphics
+    function rebuildCharts(filtered) {
+        if (!isAnalyticsVisible) return;
+
+        // Theme colors
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#a1a1aa' : '#64748b';
+        const gridColor = isDark ? 'rgba(63, 63, 70, 0.4)' : 'rgba(226, 232, 240, 0.6)';
+        const tooltipBg = isDark ? '#18181b' : '#ffffff';
+        const tooltipBorder = isDark ? '#27272a' : '#e2e8f0';
+        const tooltipText = isDark ? '#ffffff' : '#0f172a';
+
+        // 1. Destroy existing instances
+        if (workTypeChartObj) workTypeChartObj.destroy();
+        if (dailyHoursChartObj) dailyHoursChartObj.destroy();
+
+        // 2. Data logic: Work type categories
+        const workTypes = {};
+        filtered.forEach(l => {
+            workTypes[l.work_type] = (workTypes[l.work_type] || 0) + parseFloat(l.hours);
+        });
+
+        const workLabels = Object.keys(workTypes);
+        const workData = Object.values(workTypes);
+
+        const colorsPalette = {
+            'NETWORK': '#6366f1',    // Indigo
+            'SERVICE': '#10b981',    // Emerald
+            'MAINTENANCE': '#f59e0b',// Amber
+            'SUPPORT': '#8b5cf6',    // Purple
+            'OTHER': '#ec4899',      // Pink
+            'HO': '#4f46e5',         // Indigo darker
+            'RBCSC': '#059669',      // Emerald darker
+            'SRO': '#d97706'         // Amber darker
+        };
+
+        const bgColors = workLabels.map(label => colorsPalette[label] || '#94a3b8');
+
+        // Render Doughnut Chart
+        const ctxDoughnut = document.getElementById('workTypeChart').getContext('2d');
+        workTypeChartObj = new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: workLabels,
+                datasets: [{
+                    data: workData,
+                    backgroundColor: bgColors,
+                    borderWidth: isDark ? 2 : 1,
+                    borderColor: isDark ? '#18181b' : '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: textColor,
+                            boxWidth: 12,
+                            font: { size: 10, family: 'Inter' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: tooltipBg,
+                        borderColor: tooltipBorder,
+                        borderWidth: 1,
+                        titleColor: textColor,
+                        bodyColor: tooltipText,
+                        bodyFont: { family: 'Inter', weight: 'bold' }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+
+        // 3. Data logic: Last 7 Days log history
+        const daysLabels = [];
+        const daysData = [];
+        const now = new Date();
+
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(now.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            daysLabels.push(d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' }));
+            
+            let daySum = 0;
+            filtered.forEach(log => {
+                if (log.timestamp.startsWith(dateStr)) {
+                    daySum += parseFloat(log.hours) || 0;
+                }
+            });
+            daysData.push(daySum);
+        }
+
+        // Render Bar Chart
+        const ctxBar = document.getElementById('dailyHoursChart').getContext('2d');
+        dailyHoursChartObj = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: daysLabels,
+                datasets: [{
+                    label: 'Hours Worked',
+                    data: daysData,
+                    backgroundColor: isDark ? 'rgba(99, 102, 241, 0.75)' : 'rgba(99, 102, 241, 0.85)',
+                    borderRadius: 4,
+                    hoverBackgroundColor: '#4f46e5'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: tooltipBg,
+                        borderColor: tooltipBorder,
+                        borderWidth: 1,
+                        titleColor: textColor,
+                        bodyColor: tooltipText,
+                        bodyFont: { family: 'Inter', weight: 'bold' }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor, font: { size: 9, family: 'Inter' } }
+                    },
+                    y: {
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, font: { size: 9, family: 'Inter' } },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Export log details to CSV
+    function exportToCSV() {
+        const filtered = getFilteredLogs();
+        if (filtered.length === 0) {
+            alert('No log entries match the active filters to export.');
+            return;
+        }
+
+        let csvContent = "\uFEFF"; // Byte Order Mark for proper Excel UTF-8 encoding
+        csvContent += "Timestamp,Work Type,Hours Worked,Description,Status\n";
+
+        filtered.forEach(log => {
+            const timestamp = log.timestamp.replace('T', ' ');
+            const type = log.work_type;
+            const hours = log.hours;
+            const status = log.status;
+            // Clean quotes in description
+            const cleanDesc = log.description.replace(/"/g, '""');
+            csvContent += `"${timestamp}","${type}",${hours},"${cleanDesc}","${status}"\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        const fileDate = new Date().toISOString().split('T')[0];
+        link.setAttribute("download", `IOCL_Logix_Timesheet_${fileDate}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Trigger Print layout and construct the print area
+    function printTimesheet() {
+        const filtered = getFilteredLogs();
+        if (filtered.length === 0) {
+            alert('No log entries available to generate the report printout.');
+            return;
+        }
+
+        // Build stats summary for print layout
+        let totalHours = 0;
+        let approvedHours = 0;
+        
+        filtered.forEach(log => {
+            const hrs = parseFloat(log.hours) || 0;
+            totalHours += hrs;
+            if (log.status === 'approved') {
+                approvedHours += hrs;
+            }
+        });
+
+        const approvalRate = totalHours > 0 ? Math.round((approvedHours / totalHours) * 100) : 0;
+
+        document.getElementById('printTotalHours').textContent = totalHours.toFixed(2);
+        document.getElementById('printApprovedHours').textContent = approvedHours.toFixed(2);
+        document.getElementById('printApprovalRate').textContent = `${approvalRate}%`;
+        document.getElementById('printReportDate').textContent = new Date().toLocaleString();
+
+        // Construct table body rows for print
+        const printBody = document.getElementById('printTableBody');
+        printBody.innerHTML = ''; // reset previous content
+
+        filtered.forEach(log => {
+            const row = document.createElement('tr');
+            row.className = 'border-b border-slate-300';
+            
+            // Format status capitalization
+            const statusWord = log.status.charAt(0).toUpperCase() + log.status.slice(1);
+
+            row.innerHTML = `
+                <td class="border border-slate-300 p-2 whitespace-nowrap">${log.timestamp.replace('T', ' ')}</td>
+                <td class="border border-slate-300 p-2">${log.work_type}</td>
+                <td class="border border-slate-300 p-2 text-center font-semibold">${parseFloat(log.hours).toFixed(2)}</td>
+                <td class="border border-slate-300 p-2 max-w-xs break-words">${log.description}</td>
+                <td class="border border-slate-300 p-2 font-medium">${statusWord}</td>
+            `;
+            printBody.appendChild(row);
+        });
+
+        // Trigger native print dialog
+        window.print();
+    }
+</script>
+
 {% endblock %}

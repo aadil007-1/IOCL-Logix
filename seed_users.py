@@ -46,7 +46,11 @@ users_data = [
     {"username": "00503143", "name": "BUSHRA", "type": "EMPLOYEE", "password": "bushra123"},
     {"username": "00508558", "name": "NIVETHA", "type": "EMPLOYEE", "password": "nivetha123"},
     {"username": "12345678", "name": "DC ENGG NETW", "type": "CIPL", "password": "CIPL123"},
-    {"username": "87654321", "name": "DC ENGG SERV", "type": "CIPL", "password": "CIPL321"}
+    {"username": "87654321", "name": "DC ENGG SERV", "type": "CIPL", "password": "CIPL321"},
+    {"username": "00000001", "name": "TEST ADMIN", "type": "ADMIN", "password": "admin123"},
+    {"username": "00000002", "name": "TEST EMPLOYEE", "type": "EMPLOYEE", "password": "emp123"},
+    {"username": "00000003", "name": "TEST CIPL", "type": "CIPL", "password": "cipl123"},
+    {"username": "00000004", "name": "TEST ALL ROLES", "type": "ADMIN & EMPLOYEE", "password": "all123"}
 ]
 
 print("Starting to seed users...")

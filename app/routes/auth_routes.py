@@ -21,7 +21,15 @@ def login():
             return render_template('login.html')
             
         try:
-            auth_response = ext.supabase.auth.sign_in_with_password({"email": email, "password": password})
+            # Initialize a separate client for the user sign-in to prevent polluting the global ext.supabase client
+            from flask import current_app
+            from supabase import create_client
+            auth_client = create_client(
+                current_app.config['SUPABASE_URL'], 
+                current_app.config['SUPABASE_KEY']
+            )
+            auth_response = auth_client.auth.sign_in_with_password({"email": email, "password": password})
+            
             session['user'] = {
                 'id': auth_response.user.id,
                 'email': auth_response.user.email
