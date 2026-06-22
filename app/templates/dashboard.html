@@ -2,8 +2,7 @@
 {% block title %}Dashboard - IOCL Logix{% endblock %}
 {% block content %}
 
-<!-- Load Chart.js from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <!-- CSS Styling for Custom Scrollbar and Print layouts -->
 <style>
@@ -65,15 +64,8 @@
             <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Your Dashboard</h1>
             <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Track and manage your daily work logs.</p>
         </div>
-        <div class="flex items-center space-x-3 w-full md:w-auto">
-            <button onclick="toggleAnalytics()" class="flex-grow md:flex-grow-0 inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-350 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/80 text-slate-700 dark:text-slate-300 transition-colors gap-2 shadow-sm focus:outline-none">
-                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
-                </svg>
-                <span id="toggleAnalyticsText">Hide Analytics</span>
-            </button>
-            <button onclick="document.getElementById('logModal').classList.remove('hidden')" class="flex-grow md:flex-grow-0 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-all shadow-md flex items-center justify-center space-x-2 transform hover:scale-[1.02]">
+        <div class="flex items-center w-full md:w-auto">
+            <button onclick="document.getElementById('logModal').classList.remove('hidden')" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-all shadow-md flex items-center justify-center space-x-2 transform hover:scale-[1.02]">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                 </svg>
@@ -82,79 +74,7 @@
         </div>
     </div>
 
-    <!-- Option 1: Interactive Personal Analytics Section -->
-    <div id="analyticsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all duration-300">
-        <!-- Stat Cards -->
-        <div class="space-y-4">
-            <!-- Card 1: Total Hours -->
-            <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/80 shadow-sm transition-all flex flex-col justify-between relative overflow-hidden">
-                <!-- Accent Top Border -->
-                <div class="absolute top-0 left-0 right-0 h-[3px] bg-blue-500"></div>
-                <div class="flex justify-between items-start">
-                    <div>
-                        <span class="text-xs font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider">Total Hours Logged</span>
-                        <div class="text-3xl font-extrabold mt-2 text-slate-900 dark:text-white tracking-tight" id="statTotalHours">0.00</div>
-                    </div>
-                    <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-3" id="statLogCount">0 logs total</p>
-            </div>
-            <!-- Card 2: Approved Hours -->
-            <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/80 shadow-sm transition-all flex flex-col justify-between relative overflow-hidden">
-                <!-- Accent Top Border -->
-                <div class="absolute top-0 left-0 right-0 h-[3px] bg-emerald-500"></div>
-                <div class="flex justify-between items-start">
-                    <div>
-                        <span class="text-xs font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider">Approved Hours</span>
-                        <div class="text-3xl font-extrabold mt-2 text-slate-900 dark:text-white tracking-tight" id="statApprovedHours">0.00</div>
-                    </div>
-                    <div class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-3" id="statApprovalRate">0% approval rate</p>
-            </div>
-            <!-- Card 3: Avg Hours / Session -->
-            <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/80 shadow-sm transition-all flex flex-col justify-between relative overflow-hidden">
-                <!-- Accent Top Border -->
-                <div class="absolute top-0 left-0 right-0 h-[3px] bg-orange-500"></div>
-                <div class="flex justify-between items-start">
-                    <div>
-                        <span class="text-xs font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider">Avg. Hours / Log</span>
-                        <div class="text-3xl font-extrabold mt-2 text-slate-900 dark:text-white tracking-tight" id="statAvgHours">0.00</div>
-                    </div>
-                    <div class="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-3">hours per daily session</p>
-            </div>
-        </div>
-        
-        <!-- Doughnut Chart: Work Type -->
-        <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-zinc-800 transition-colors flex flex-col justify-between">
-            <h4 class="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-4 uppercase tracking-wider">Work Type Distribution</h4>
-            <div class="relative flex-grow flex items-center justify-center min-h-[190px]">
-                <canvas id="workTypeChart"></canvas>
-            </div>
-        </div>
 
-        <!-- Bar Chart: Hours Logged over Last 7 Days -->
-        <div class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-zinc-800 transition-colors flex flex-col justify-between">
-            <h4 class="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-4 uppercase tracking-wider">Activity (Last 7 Days)</h4>
-            <div class="relative flex-grow flex items-center justify-center min-h-[190px]">
-                <canvas id="dailyHoursChart"></canvas>
-            </div>
-        </div>
-    </div>
 
     <!-- Option 2: Filters & Timesheet Export Card -->
     <div id="filterExportCard" class="bg-white dark:bg-zinc-900/30 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-zinc-800 transition-colors">
@@ -410,25 +330,6 @@
 <script>
     // 1. Load the backend list values into standard JS object array
     const rawLogs = {{ logs|tojson|safe if logs else '[]' }};
-    
-    // Global references for charts
-    let workTypeChartObj = null;
-    let dailyHoursChartObj = null;
-    let isAnalyticsVisible = true;
-
-    // Standard Theme Observer for Chart redraws
-    const targetNode = document.documentElement;
-    const config = { attributes: true, attributeFilter: ['class'] };
-    const callback = function(mutationsList, observer) {
-        for(let mutation of mutationsList) {
-            if (mutation.attributeName === 'class') {
-                // Class changed (theme flipped), reload charts with native colors
-                rebuildCharts(getFilteredLogs());
-            }
-        }
-    };
-    const observer = new MutationObserver(callback);
-    observer.observe(targetNode, config);
 
     // Initial setup on DOM Ready
     window.addEventListener('DOMContentLoaded', () => {
@@ -440,24 +341,6 @@
         // Initialize dashboard UI
         applyFilters();
     });
-
-    // Toggle analytics view on/off
-    function toggleAnalytics() {
-        const container = document.getElementById('analyticsContainer');
-        const btnText = document.getElementById('toggleAnalyticsText');
-        if (isAnalyticsVisible) {
-            container.classList.add('hidden');
-            btnText.textContent = 'Show Analytics';
-            isAnalyticsVisible = false;
-        } else {
-            container.classList.remove('hidden');
-            btnText.textContent = 'Hide Analytics';
-            isAnalyticsVisible = true;
-            setTimeout(() => {
-                rebuildCharts(getFilteredLogs());
-            }, 100);
-        }
-    }
 
     // Toggle Date Range inputs display
     function toggleCustomDates() {
@@ -541,176 +424,7 @@
             emptyRow.classList.add('hidden');
         }
         
-        // Refresh values and charts
-        updateStats(filtered);
-        rebuildCharts(filtered);
-    }
 
-    // Recalculate stats cards
-    function updateStats(filtered) {
-        let totalHours = 0;
-        let approvedHours = 0;
-        
-        filtered.forEach(log => {
-            const hrs = parseFloat(log.hours) || 0;
-            totalHours += hrs;
-            if (log.status === 'approved') {
-                approvedHours += hrs;
-            }
-        });
-        
-        const logCount = filtered.length;
-        const avgHours = logCount > 0 ? (totalHours / logCount) : 0;
-        const approvalRate = totalHours > 0 ? Math.round((approvedHours / totalHours) * 100) : 0;
-        
-        // Populate standard cards
-        document.getElementById('statTotalHours').textContent = totalHours.toFixed(2);
-        document.getElementById('statLogCount').textContent = `${logCount} session log${logCount !== 1 ? 's' : ''}`;
-        
-        document.getElementById('statApprovedHours').textContent = approvedHours.toFixed(2);
-        document.getElementById('statApprovalRate').textContent = `${approvalRate}% approval rate`;
-        
-        document.getElementById('statAvgHours').textContent = avgHours.toFixed(2);
-    }
-
-    // Draw and configure Chart.js graphics
-    function rebuildCharts(filtered) {
-        if (!isAnalyticsVisible) return;
-
-        // Theme colors
-        const isDark = document.documentElement.classList.contains('dark');
-        const textColor = isDark ? '#a1a1aa' : '#64748b';
-        const gridColor = isDark ? 'rgba(63, 63, 70, 0.4)' : 'rgba(226, 232, 240, 0.6)';
-        const tooltipBg = isDark ? '#18181b' : '#ffffff';
-        const tooltipBorder = isDark ? '#27272a' : '#e2e8f0';
-        const tooltipText = isDark ? '#ffffff' : '#0f172a';
-
-        // 1. Destroy existing instances
-        if (workTypeChartObj) workTypeChartObj.destroy();
-        if (dailyHoursChartObj) dailyHoursChartObj.destroy();
-
-        // 2. Data logic: Work type categories
-        const workTypes = {};
-        filtered.forEach(l => {
-            workTypes[l.work_type] = (workTypes[l.work_type] || 0) + parseFloat(l.hours);
-        });
-
-        const workLabels = Object.keys(workTypes);
-        const workData = Object.values(workTypes);
-
-        const colorsPalette = {
-            'NETWORK': '#6366f1',    // Indigo
-            'SERVICE': '#10b981',    // Emerald
-            'MAINTENANCE': '#f59e0b',// Amber
-            'SUPPORT': '#8b5cf6',    // Purple
-            'OTHER': '#ec4899',      // Pink
-            'HO': '#4f46e5',         // Indigo darker
-            'RBCSC': '#059669',      // Emerald darker
-            'SRO': '#d97706'         // Amber darker
-        };
-
-        const bgColors = workLabels.map(label => colorsPalette[label] || '#94a3b8');
-
-        // Render Doughnut Chart
-        const ctxDoughnut = document.getElementById('workTypeChart').getContext('2d');
-        workTypeChartObj = new Chart(ctxDoughnut, {
-            type: 'doughnut',
-            data: {
-                labels: workLabels,
-                datasets: [{
-                    data: workData,
-                    backgroundColor: bgColors,
-                    borderWidth: isDark ? 2 : 1,
-                    borderColor: isDark ? '#18181b' : '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: textColor,
-                            boxWidth: 12,
-                            font: { size: 10, family: 'Inter' }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: tooltipBg,
-                        borderColor: tooltipBorder,
-                        borderWidth: 1,
-                        titleColor: textColor,
-                        bodyColor: tooltipText,
-                        bodyFont: { family: 'Inter', weight: 'bold' }
-                    }
-                },
-                cutout: '65%'
-            }
-        });
-
-        // 3. Data logic: Last 7 Days log history
-        const daysLabels = [];
-        const daysData = [];
-        const now = new Date();
-
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(now.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
-            daysLabels.push(d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' }));
-            
-            let daySum = 0;
-            filtered.forEach(log => {
-                if (log.timestamp.startsWith(dateStr)) {
-                    daySum += parseFloat(log.hours) || 0;
-                }
-            });
-            daysData.push(daySum);
-        }
-
-        // Render Bar Chart
-        const ctxBar = document.getElementById('dailyHoursChart').getContext('2d');
-        dailyHoursChartObj = new Chart(ctxBar, {
-            type: 'bar',
-            data: {
-                labels: daysLabels,
-                datasets: [{
-                    label: 'Hours Worked',
-                    data: daysData,
-                    backgroundColor: isDark ? 'rgba(99, 102, 241, 0.75)' : 'rgba(99, 102, 241, 0.85)',
-                    borderRadius: 4,
-                    hoverBackgroundColor: '#4f46e5'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: tooltipBg,
-                        borderColor: tooltipBorder,
-                        borderWidth: 1,
-                        titleColor: textColor,
-                        bodyColor: tooltipText,
-                        bodyFont: { family: 'Inter', weight: 'bold' }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: textColor, font: { size: 9, family: 'Inter' } }
-                    },
-                    y: {
-                        grid: { color: gridColor },
-                        ticks: { color: textColor, font: { size: 9, family: 'Inter' } },
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
 
     // Export log details to CSV
     function exportToCSV() {
