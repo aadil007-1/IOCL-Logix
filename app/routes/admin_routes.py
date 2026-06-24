@@ -104,6 +104,20 @@ def review_log(log_id):
         
     return redirect(url_for('admin.dashboard'))
 
+@bp.route('/delete_log/<log_id>', methods=['POST'])
+@login_required
+def delete_log(log_id):
+    profile = session.get('profile', {})
+    if not profile.get('is_admin'):
+        flash('Access denied. Admins only.', 'error')
+        return redirect(url_for('dashboard.index'))
+    try:
+        ext.supabase.table('work_logs').delete().eq('id', log_id).execute()
+        flash('Log entry deleted successfully.', 'success')
+    except Exception as e:
+        flash(f'Error deleting log: {str(e)}', 'error')
+    return redirect(url_for('admin.dashboard'))
+
 @bp.route('/users')
 @login_required
 def users_list():

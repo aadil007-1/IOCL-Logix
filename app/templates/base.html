@@ -16,6 +16,7 @@
             font-family: 'Inter', sans-serif;
         }
     </style>
+    {% block head %}{% endblock %}
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
