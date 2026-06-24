@@ -75,14 +75,18 @@ for _ in range(150):
         work_type = random.choice(["HO", "RBCSC", "SRO"])
         desc = random.choice(work_descriptions["standard"])
         
-    hours = random.choice([1.0, 1.5, 2.0, 3.0, 4.0, 5.5, 6.0, 8.0, 8.5])
-    status = random.choice(["approved", "pending", "rejected", "approved", "approved"]) # weight towards approved/pending
+    hours = 1.0
+    status = "pending"
+    location_dept = random.choice(["SRO", "TNSO", "RBSCS", "TNSO LOCATION", "DEPARTMENT"])
+    role = random.choice(["EMPLOYEE", "INTERN", "VENDORS"])
     
     logs_to_insert.append({
         "user_id": profile["id"],
-        "timestamp": log_time.isoformat(),
+        "timestamp": log_time.strftime('%Y-%m-%d'),
         "work_type": work_type,
         "description": f"{desc} - {random.randint(100, 999)}",
+        "location_dept": location_dept,
+        "role": role,
         "hours": hours,
         "status": status
     })

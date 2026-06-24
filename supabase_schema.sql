@@ -52,6 +52,8 @@ CREATE TABLE public.work_logs (
   timestamp timestamp with time zone NOT NULL,
   work_type text NOT NULL,
   description text NOT NULL,
+  location_dept text,
+  role text,
   hours numeric NOT NULL CHECK (hours > 0),
   status text DEFAULT 'pending' NOT NULL,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL

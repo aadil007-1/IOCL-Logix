@@ -20,8 +20,9 @@ def index():
 @bp.route('/log_work', methods=['POST'])
 @login_required
 def log_work():
-    timestamp = request.form['timestamp']
-    hours = request.form['hours']
+    date = request.form['date']
+    location_dept = request.form['location_dept']
+    role = request.form['role']
     work_type = request.form['work_type']
     description = request.form['description']
     user_id = session['user']['id']
@@ -29,8 +30,10 @@ def log_work():
     try:
         ext.supabase.table('work_logs').insert({
             'user_id': user_id,
-            'timestamp': timestamp,
-            'hours': float(hours),
+            'timestamp': date,
+            'location_dept': location_dept,
+            'role': role,
+            'hours': 1.0,
             'work_type': work_type,
             'description': description,
             'status': 'pending'

@@ -99,7 +99,7 @@
             </div>
         </div>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <!-- Search field -->
             <div>
                 <label for="searchQuery" class="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-1 uppercase tracking-wider">Search Description</label>
@@ -121,16 +121,6 @@
                     <option value="RBCSC">RBCSC</option>
                     <option value="SRO">SRO</option>
                     {% endif %}
-                </select>
-            </div>
-            <!-- Status dropdown -->
-            <div>
-                <label for="filterStatus" class="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-1 uppercase tracking-wider">Status</label>
-                <select id="filterStatus" onchange="applyFilters()" class="w-full text-xs px-3 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
-                    <option value="ALL">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
                 </select>
             </div>
             <!-- Date range selection -->
@@ -164,12 +154,11 @@
             <table class="w-full text-sm text-left text-slate-700 dark:text-slate-300">
                 <thead class="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-100 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800">
                     <tr>
-                        <th scope="col" class="px-6 py-4">Timestamp</th>
+                        <th scope="col" class="px-6 py-4">Date</th>
+                        <th scope="col" class="px-6 py-4">Role</th>
+                        <th scope="col" class="px-6 py-4">Location/Department</th>
                         <th scope="col" class="px-6 py-4">Type</th>
-                        <th scope="col" class="px-6 py-4">Hours</th>
                         <th scope="col" class="px-6 py-4">Description</th>
-                        <th scope="col" class="px-6 py-4">Status</th>
-                        <th scope="col" class="px-6 py-4 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="logsTableBody" class="divide-y divide-slate-200 dark:divide-zinc-800/80">
@@ -178,35 +167,26 @@
                         data-id="{{ log.id }}"
                         data-timestamp="{{ log.timestamp }}"
                         data-worktype="{{ log.work_type }}"
-                        data-hours="{{ log.hours }}"
                         data-description="{{ log.description }}"
-                        data-status="{{ log.status }}">
-                        <td class="px-6 py-4 whitespace-nowrap">{{ log.timestamp[:16].replace('T', ' ') }}</td>
+                        data-locationdept="{{ log.location_dept or '' }}"
+                        data-role="{{ log.role or '' }}">
+                        <td class="px-6 py-4 whitespace-nowrap">{{ log.timestamp[:10] }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs rounded-full border border-blue-200 dark:border-blue-850/50 font-medium">{{ log.role }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 text-xs rounded-full border border-purple-200 dark:border-purple-850/50 font-medium">{{ log.location_dept }}</span>
+                        </td>
                         <td class="px-6 py-4">
                             <span class="px-2 py-1 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 text-xs rounded-full border border-slate-200 dark:border-zinc-700">{{ log.work_type }}</span>
                         </td>
-                        <td class="px-6 py-4 font-semibold text-indigo-600 dark:text-indigo-400">{{ log.hours }}</td>
                         <td class="px-6 py-4 max-w-xs truncate" title="{{ log.description }}">{{ log.description }}</td>
-                        <td class="px-6 py-4">
-                            {% if log.status == 'approved' %}
-                            <span class="px-2 py-1 bg-green-100 text-green-800 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900/50 text-xs rounded-full">Approved</span>
-                            {% elif log.status == 'rejected' %}
-                            <span class="px-2 py-1 bg-red-100 text-red-800 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50 text-xs rounded-full">Rejected</span>
-                            {% else %}
-                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 dark:bg-yellow-950/30 dark:text-yellow-400 dark:border-yellow-900/50 text-xs rounded-full">Pending</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <form method="POST" action="{{ url_for('dashboard.delete_log', log_id=log.id) }}" onsubmit="return confirm('Are you sure you want to delete this log?');" class="inline">
-                                <button type="submit" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors">Delete</button>
-                            </form>
-                        </td>
                     </tr>
                     {% endfor %}
                     
                     <!-- Dynamic Empty State Row -->
                     <tr id="emptyStateRow" class="hidden">
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
                             <svg class="mx-auto h-12 w-12 text-slate-300 dark:text-slate-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -234,18 +214,10 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-4 my-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+    <div class="grid grid-cols-1 gap-4 my-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
         <div>
-            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Hours Compiled</span>
-            <div class="text-2xl font-extrabold text-slate-850 mt-0.5" id="printTotalHours">0.00</div>
-        </div>
-        <div>
-            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Approved Hours</span>
-            <div class="text-2xl font-extrabold text-slate-850 mt-0.5" id="printApprovedHours">0.00</div>
-        </div>
-        <div>
-            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Overall Approval Rate</span>
-            <div class="text-2xl font-extrabold text-slate-850 mt-0.5" id="printApprovalRate">0%</div>
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Logged Entries</span>
+            <div class="text-2xl font-extrabold text-slate-850 mt-0.5" id="printTotalLogs">0</div>
         </div>
     </div>
 
@@ -253,11 +225,11 @@
     <table class="w-full text-xs text-left border-collapse border border-slate-300">
         <thead>
             <tr class="bg-slate-100 border-b border-slate-300">
-                <th class="border border-slate-300 p-2 font-bold uppercase">Timestamp</th>
+                <th class="border border-slate-300 p-2 font-bold uppercase">Date</th>
+                <th class="border border-slate-300 p-2 font-bold uppercase">Role</th>
+                <th class="border border-slate-300 p-2 font-bold uppercase">Location/Department</th>
                 <th class="border border-slate-300 p-2 font-bold uppercase">Work Type</th>
-                <th class="border border-slate-300 p-2 font-bold uppercase text-center">Hours</th>
                 <th class="border border-slate-300 p-2 font-bold uppercase">Description</th>
-                <th class="border border-slate-300 p-2 font-bold uppercase">Status</th>
             </tr>
         </thead>
         <tbody id="printTableBody">
@@ -286,12 +258,26 @@
             </div>
             <form method="POST" action="{{ url_for('dashboard.log_work') }}" class="space-y-5">
                 <div>
-                    <label for="timestamp" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Timestamp</label>
-                    <input type="datetime-local" id="timestamp" name="timestamp" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                    <label for="date" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Date</label>
+                    <input type="date" id="date" name="date" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
                 </div>
                 <div>
-                    <label for="hours" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hours Worked</label>
-                    <input type="number" id="hours" name="hours" step="0.25" min="0.25" max="24" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                    <label for="location_dept" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Location/Department</label>
+                    <select id="location_dept" name="location_dept" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                        <option value="SRO">SRO</option>
+                        <option value="TNSO">TNSO</option>
+                        <option value="RBSCS">RBSCS</option>
+                        <option value="TNSO LOCATION">TNSO LOCATION</option>
+                        <option value="DEPARTMENT">DEPARTMENT</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="role" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Role</label>
+                    <select id="role" name="role" required class="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-white">
+                        <option value="EMPLOYEE">EMPLOYEE</option>
+                        <option value="INTERN">INTERN</option>
+                        <option value="VENDORS">VENDORS</option>
+                    </select>
                 </div>
                 <div>
                     <label for="work_type" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Type of Work</label>
@@ -333,10 +319,12 @@
 
     // Initial setup on DOM Ready
     window.addEventListener('DOMContentLoaded', () => {
-        // Set default datetime to now
+        // Set default date to today YYYY-MM-DD
         const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        document.getElementById('timestamp').value = now.toISOString().slice(0, 16);
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        document.getElementById('date').value = `${year}-${month}-${day}`;
         
         // Initialize dashboard UI
         applyFilters();
@@ -357,7 +345,6 @@
     function getFilteredLogs() {
         const search = document.getElementById('searchQuery').value.toLowerCase().trim();
         const workType = document.getElementById('filterWorkType').value;
-        const status = document.getElementById('filterStatus').value;
         const dateRange = document.getElementById('filterDateRange').value;
         const start = document.getElementById('startDate').value;
         const end = document.getElementById('endDate').value;
@@ -371,10 +358,6 @@
             }
             // Work Type
             if (workType !== 'ALL' && log.work_type !== workType) {
-                return false;
-            }
-            // Status
-            if (status !== 'ALL' && log.status !== status) {
                 return false;
             }
             // Date Range
@@ -423,8 +406,7 @@
         } else {
             emptyRow.classList.add('hidden');
         }
-        
-
+    }
 
     // Export log details to CSV
     function exportToCSV() {
@@ -435,16 +417,16 @@
         }
 
         let csvContent = "\uFEFF"; // Byte Order Mark for proper Excel UTF-8 encoding
-        csvContent += "Timestamp,Work Type,Hours Worked,Description,Status\n";
+        csvContent += "Date,Role,Location/Department,Work Type,Description\n";
 
         filtered.forEach(log => {
-            const timestamp = log.timestamp.replace('T', ' ');
+            const date = log.timestamp.split('T')[0];
+            const role = log.role || '';
+            const location = log.location_dept || '';
             const type = log.work_type;
-            const hours = log.hours;
-            const status = log.status;
             // Clean quotes in description
             const cleanDesc = log.description.replace(/"/g, '""');
-            csvContent += `"${timestamp}","${type}",${hours},"${cleanDesc}","${status}"\n`;
+            csvContent += `"${date}","${role}","${location}","${type}","${cleanDesc}"\n`;
         });
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -466,23 +448,7 @@
             return;
         }
 
-        // Build stats summary for print layout
-        let totalHours = 0;
-        let approvedHours = 0;
-        
-        filtered.forEach(log => {
-            const hrs = parseFloat(log.hours) || 0;
-            totalHours += hrs;
-            if (log.status === 'approved') {
-                approvedHours += hrs;
-            }
-        });
-
-        const approvalRate = totalHours > 0 ? Math.round((approvedHours / totalHours) * 100) : 0;
-
-        document.getElementById('printTotalHours').textContent = totalHours.toFixed(2);
-        document.getElementById('printApprovedHours').textContent = approvedHours.toFixed(2);
-        document.getElementById('printApprovalRate').textContent = `${approvalRate}%`;
+        document.getElementById('printTotalLogs').textContent = filtered.length;
         document.getElementById('printReportDate').textContent = new Date().toLocaleString();
 
         // Construct table body rows for print
@@ -493,15 +459,12 @@
             const row = document.createElement('tr');
             row.className = 'border-b border-slate-300';
             
-            // Format status capitalization
-            const statusWord = log.status.charAt(0).toUpperCase() + log.status.slice(1);
-
             row.innerHTML = `
-                <td class="border border-slate-300 p-2 whitespace-nowrap">${log.timestamp.replace('T', ' ')}</td>
+                <td class="border border-slate-300 p-2 whitespace-nowrap">${log.timestamp.split('T')[0]}</td>
+                <td class="border border-slate-300 p-2">${log.role || ''}</td>
+                <td class="border border-slate-300 p-2">${log.location_dept || ''}</td>
                 <td class="border border-slate-300 p-2">${log.work_type}</td>
-                <td class="border border-slate-300 p-2 text-center font-semibold">${parseFloat(log.hours).toFixed(2)}</td>
                 <td class="border border-slate-300 p-2 max-w-xs break-words">${log.description}</td>
-                <td class="border border-slate-300 p-2 font-medium">${statusWord}</td>
             `;
             printBody.appendChild(row);
         });

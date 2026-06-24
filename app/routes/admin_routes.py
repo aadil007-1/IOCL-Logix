@@ -17,23 +17,27 @@ def dashboard():
     sort_by = request.args.get('sort_by', 'timestamp')
     order = request.args.get('order', 'desc')
     group_by = request.args.get('group_by', 'none')
+    filter_date = request.args.get('filter_date', '')
     
     grouped_logs = []
     try:
         logs_response = ext.supabase.table('work_logs').select('*, profiles(name, username)').order('timestamp', desc=True).execute()
         all_logs = logs_response.data
         
+        # Apply date filter in python
+        if filter_date:
+            all_logs = [log for log in all_logs if log.get('timestamp', '')[:10] == filter_date]
+            
         # Sort results in python for flexible sorting across relations
         reverse = (order == 'desc')
         if sort_by == 'timestamp':
             all_logs.sort(key=lambda x: x.get('timestamp', ''), reverse=reverse)
-        elif sort_by == 'hours':
-            all_logs.sort(key=lambda x: float(x.get('hours') or 0), reverse=reverse)
+        elif sort_by == 'role':
+            all_logs.sort(key=lambda x: x.get('role', '').lower(), reverse=reverse)
+        elif sort_by == 'location_dept':
+            all_logs.sort(key=lambda x: x.get('location_dept', '').lower(), reverse=reverse)
         elif sort_by == 'name':
             all_logs.sort(key=lambda x: ((x.get('profiles') or {}).get('name') or '').lower(), reverse=reverse)
-        elif sort_by == 'status':
-            status_priority = {'pending': 0, 'approved': 1, 'rejected': 2}
-            all_logs.sort(key=lambda x: status_priority.get(x.get('status', 'pending'), 9), reverse=reverse)
         elif sort_by == 'type':
             all_logs.sort(key=lambda x: x.get('work_type', '').lower(), reverse=reverse)
         elif sort_by == 'date_type':
@@ -79,7 +83,7 @@ def dashboard():
         grouped_logs = []
         flash(f'Error fetching all logs: {str(e)}', 'error')
         
-    return render_template('admin.html', grouped_logs=grouped_logs, sort_by=sort_by, order=order, group_by=group_by)
+    return render_template('admin.html', grouped_logs=grouped_logs, sort_by=sort_by, order=order, group_by=group_by, filter_date=filter_date)
 
 @bp.route('/review_log/<log_id>', methods=['POST'])
 @login_required
