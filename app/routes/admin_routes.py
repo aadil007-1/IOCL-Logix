@@ -189,6 +189,7 @@ def create_user():
         
     username = request.form.get('username')
     password = request.form.get('password')
+    full_name = request.form.get('full_name', '').strip() or username  # fall back to username if blank
     email = f"{username}@worklog.com"
     
     try:
@@ -199,10 +200,10 @@ def create_user():
             "email_confirm": True,
             "user_metadata": {
                 "username": username,
-                "name": username # default name to username
+                "name": full_name
             }
         })
-        flash(f'User {username} created successfully.', 'success')
+        flash(f'User {username} ({full_name}) created successfully.', 'success')
     except Exception as e:
         flash(f'Error creating user: {str(e)}', 'error')
         
